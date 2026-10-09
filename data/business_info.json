@@ -1,0 +1,16 @@
+{
+    "business_id": "sharp-cuts",
+    "business_name": "Sharp Cuts Salon",
+
+    "services":[
+        "Low Cut",
+        "Locs Twist",
+        "Beard Trim"
+    ],
+
+  "available_slots": [
+    "Saturday at 11:00 AM",
+    "Saturday at 4:00 PM"
+  ],
+  "price_note": "Haircut starts from ₦3,000."
+}
