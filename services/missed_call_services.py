@@ -19,11 +19,11 @@ def save_json(path, data):
 def get_missed_calls():
     return load_json(MISSED_CALLS_PATH)
 
-def get_pending_missed_calls():
+def get_pending_missed_call():
     calls = get_missed_calls()
 
     for call in calls:
-        if call["Status"] == "pending_callback":
+        if call["status"] == "pending_callback":
             return call
 
     return None
@@ -34,7 +34,7 @@ def mark_callback_started(missed_call_id):
 
     for call in calls:
         if call["id"] == missed_call_id:
-            call["Status"] = "callback_in_progress"
+            call["status"] = "callback_in_progress"
             save_json(MISSED_CALLS_PATH, calls)
             return call
     return None

@@ -4,7 +4,7 @@ from services.bimpe_service import place_callback_call
 from services.booking_service import get_bookings
 from services.missed_call_services import (
     get_missed_calls,
-    get_pending_missed_calls,
+    get_pending_missed_call,
     mark_callback_started,
     log_call_result,
 )
@@ -25,7 +25,7 @@ def get_bookings_():
 
 @router.post("/api/callback/test")
 def trigger_test_callback():
-    missed_call = get_pending_missed_calls()
+    missed_call = get_pending_missed_call()
 
     if not missed_call:
         raise HTTPException(
