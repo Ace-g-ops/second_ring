@@ -15,6 +15,4 @@ app.include_router(router)
 def home():
     return{
         "message": "Secondring is live",
-        "docs": "/docs",
-        "health": "/health"
     }

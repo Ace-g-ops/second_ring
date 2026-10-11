@@ -16,6 +16,6 @@ LOGS_DIR= "logs"
 MISSED_CALLS_PATH=os.path.join(DATA_DIR,"missed_calls.json")
 BOOKINGS_PATH=os.path.join(DATA_DIR,"bookings.json")
 BUSINESS_INFO_PATH=os.path.join(DATA_DIR,"business_info.json")
-CALL_RESULTS_PATH=os.path.join(DATA_DIR,"call_results.json")
+CALL_RESULTS_PATH=os.path.join(LOGS_DIR,"call_results.json")
 
 
