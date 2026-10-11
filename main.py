@@ -10,7 +10,7 @@ app = FastAPI(
 
 app.include_router(router)
 
-@router("/")
+@app.get("/")
 def home():
     return{
         "message": "Secondring is live",
