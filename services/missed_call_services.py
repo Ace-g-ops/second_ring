@@ -53,3 +53,15 @@ def log_call_result(missed_call_id, outcome, details=None):
     save_json(CALL_RESULTS_PATH, results)
 
     return result
+
+def attach_bimpe_call_id(missed_call_id, bimpe_call_id):
+    calls = get_missed_calls()
+
+    for call in calls:
+        if call["id"] == missed_call_id:
+            call("bimpe_call_id") == bimpe_call_id
+            save_json(MISSED_CALLS_PATH, calls)
+            return call
+    return None
+
+

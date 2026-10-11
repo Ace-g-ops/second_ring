@@ -19,6 +19,12 @@ def place_callback_call(customer_phone: str, is_test_call: bool = True):
 
     return response
 
+def retrieve_call_details(bimpe_call_id: str):
+    return client.calls.retrieve(
+        BIMPE_AGENT_ID,
+        bimpe_call_id
+    )
+
 
 
 
