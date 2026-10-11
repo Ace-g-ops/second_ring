@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from config.settings import(
     MISSED_CALLS_PATH,
@@ -46,7 +46,7 @@ def log_call_result(missed_call_id, outcome, details=None):
         "missed_call_id": missed_call_id,
         "outcome": outcome,
         "details": details or {},
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
     results.append(result)
