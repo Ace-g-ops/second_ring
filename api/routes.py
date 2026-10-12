@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
+from datetime import datetime
 
 from services.bimpe_service import(
     place_callback_call,
+    filter_conversation_logs,
     retrieve_call_details
 ) 
 from services.booking_service import get_bookings
@@ -67,7 +69,7 @@ def trigger_test_callback():
     }
 
 ##this route get the each calls made alongside their ids
-@router.get("/api/callback/{missed_call}/result")
+@router.get("/api/callback/{missed_call_id}/result")
 def check_callback_result(missed_call_id: str):
     calls = get_missed_calls()
 
@@ -79,20 +81,35 @@ def check_callback_result(missed_call_id: str):
     if not missed_call:
         raise HTTPException(
             status_code=404,
-            details="Details not found"
+            detail="Missed call not found."
         )
 
-    ##get bimpe_call_id
     bimpe_call_id = missed_call.get("bimpe_call_id")
 
     if not bimpe_call_id:
         raise HTTPException(
-            status_code=404,
-            details="This call dosent have a bimpe call id"
+            status_code=400,
+            detail="This missed call has no BimpeAI call ID yet."
         )
+
     call_details = retrieve_call_details(bimpe_call_id)
+    filtered_logs = filter_conversation_logs(call_details)
+
+    transcript = [
+        {
+            "role": message.role,
+            "message": message.message,
+            "created_at": message.created_at
+        }
+        for message in filtered_logs
+    ]
 
     return {
         "missed_call": missed_call,
-        "bimpe_call_details": str(call_details)
+        "call_status": getattr(call_details, "status", None),
+        "answered_at": getattr(call_details, "answered_at", None),
+        "error_reason": getattr(call_details, "error_reason", None),
+        "started_at": getattr(call_details, "started_at", None),
+        "ended_at": getattr(call_details, "ended_at", None),
+        "transcript": transcript
     }

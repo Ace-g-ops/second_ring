@@ -59,7 +59,7 @@ def attach_bimpe_call_id(missed_call_id, bimpe_call_id):
 
     for call in calls:
         if call["id"] == missed_call_id:
-            call("bimpe_call_id") == bimpe_call_id
+            call["bimpe_call_id"] = bimpe_call_id
             save_json(MISSED_CALLS_PATH, calls)
             return call
     return None
