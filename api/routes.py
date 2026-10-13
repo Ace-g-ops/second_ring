@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException
 
-from pathlib import Path
-
-from services.bimpe_service import(
+from services.bimpe_service import (
     place_callback_call,
     filter_conversation_logs,
     retrieve_call_details
-) 
-from services.booking_service import(
+)
+
+from services.booking_service import (
     get_bookings,
     extract_booking,
     save_booking
-) 
+)
+
 from services.missed_call_services import (
     get_missed_calls,
     get_pending_missed_call,
@@ -20,19 +20,24 @@ from services.missed_call_services import (
     attach_bimpe_call_id
 )
 
+
 router = APIRouter()
+
 
 @router.get("/health")
 def health():
     return {"status": "ok"}
 
+
 @router.get("/api/missed_calls")
 def get_missed_calls_():
     return get_missed_calls()
 
+
 @router.get("/api/bookings")
 def get_bookings_():
     return get_bookings()
+
 
 @router.post("/api/callback/test")
 def trigger_test_callback():
@@ -40,7 +45,7 @@ def trigger_test_callback():
 
     if not missed_call:
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="No pending missed calls found."
         )
 
@@ -73,9 +78,7 @@ def trigger_test_callback():
         "bimpeai_response": str(call_response)
     }
 
-BOOKINGS_FILE = Path("bookings.json")
 
-##this route get the each calls made alongside their ids
 @router.get("/api/callback/{missed_call_id}/result")
 def check_callback_result(missed_call_id: str):
     calls = get_missed_calls()

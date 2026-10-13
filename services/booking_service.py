@@ -86,7 +86,7 @@ def extract_booking(transcript, missed_call):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 
-def save_bookings(booking):
+def save_booking(booking):
     bookings = []
 
     if BOOKINGS_FILE.exists():
