@@ -8,6 +8,12 @@ from services.missed_call_services import save_json, load_json
 
 BOOKINGS_FILE = Path("booking.json")
 
+AVAILABLE_SLOTS = {
+    "saturday 11:00 am": ["11", "eleven", "11am", "11 am", "morning"],
+    "saturday 4:00 pm": ["4", "four", "4pm", "4 pm", "afternoon"]
+}
+
+
 def get_bookings():
     return load_json(BOOKINGS_PATH)
 
@@ -65,15 +71,25 @@ def create_follow_up(
     return follow_up
 
 def extract_booking(transcript, missed_call):
-    text = " ".join(
-        m["message"] for m in transcript if m["role"] == "user"
+    full_text = " ".join(
+        message["message"]
+        for message in transcript
     ).lower()
 
     slot = None
-    if "11" in text and ("am" in text or "morning" in text):
-        slot = "Saturday 11:00 AM"
-    elif "4" in text and ("pm" in text or "afternoon" in text):
-        slot = "Saturday 4:00 PM"
+
+    confirmation = re.search(
+        r"confirmed for\s+(saturday\s+at\s+\d{1,2}(?::\d{2})?\s*[ap]m)",
+        full_text
+    )
+
+    if confirmation:
+        raw_slot = confirmation.group(1)
+
+        if "4" in raw_slot or "four" in raw_slot:
+            slot = "Saturday 4:00 PM"
+        elif "11" in raw_slot or "eleven" in raw_slot:
+            slot = "Saturday 11:00 AM"
 
     return {
         "booking_id": f"BK-{missed_call['id']}",
@@ -86,12 +102,19 @@ def extract_booking(transcript, missed_call):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 
+## this function block help to struturally block ids from getting reduplicated
 def save_booking(booking):
-    bookings = []
+    bookings = get_bookings()
 
-    if BOOKINGS_FILE.exists():
-        bookings = json.loads(BOOKINGS_FILE.read_text())
+    already_saved = any(
+        existing["missed_call_id"] == booking["missed_call_id"]
+        for existing in bookings
+    )
 
-        bookings.append(booking)
+    if already_saved:
+        return booking
 
-        BOOKINGS_FILE.write_text(json.dumps(bookings, indent=2))
+    bookings.append(booking)
+    BOOKINGS_FILE.write_text(json.dumps(bookings, indent=2))
+
+    return booking
