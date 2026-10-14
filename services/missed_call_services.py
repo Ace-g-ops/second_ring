@@ -34,7 +34,7 @@ def mark_callback_started(missed_call_id):
 
     for call in calls:
         if call["id"] == missed_call_id:
-            call["status"] = "callback_in_progress"
+            call["status"] = "callback_completed"
             save_json(MISSED_CALLS_PATH, calls)
             return call
     return None

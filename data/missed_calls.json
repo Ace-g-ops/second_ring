@@ -9,12 +9,11 @@
     "bimpe_call_id": "cmv6shfq001yfp68bw8m8vbus"
   },
   {
-    "id": "MC-003",
+    "id": "MC-004",
     "business_id": "sharp-cuts",
     "customer_name": "Leo",
     "customer_phone": "+2347030341119",
     "missed_at": "2026-10-09T17:00:00Z",
-    "status": "callback_in_progress",
-    "bimpe_call_id": "cmv6tya4u01zkp68bm1nj4emc"
+    "status": "callback_pending"
   }
 ]
