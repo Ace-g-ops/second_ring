@@ -3,7 +3,7 @@
     "id": "MC-001",
     "business_id": "sharp-cuts",
     "customer_name": "York",
-    "customer_phone": "+2347030341119",
+    "customer_phone": "+2347030*****",
     "missed_at": "2026-10-09T17:00:00Z",
     "status": "callback_completed",
     "bimpe_call_id": "cmv6shfq001yfp68bw8m8vbus"
@@ -12,7 +12,7 @@
     "id": "MC-004",
     "business_id": "sharp-cuts",
     "customer_name": "Leo",
-    "customer_phone": "+2347030341119",
+    "customer_phone": "+2347030*****",
     "missed_at": "2026-10-09T17:00:00Z",
     "status": "callback_completed",
     "bimpe_call_id": "cmv7zldta004hn488ox8k3r8f"
