@@ -1,6 +1,10 @@
 from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
+
 from services.models import Booking
+from services.security import encrypt_phone, hash_phone
+
 
 
 def get_bookings(db: Session):
@@ -36,18 +40,19 @@ def extract_booking(transcript, missed_call):
         "id": f"BK-{missed_call.id}",
         "missed_call_id": missed_call.id,
         "customer_name": missed_call.customer_name,
-        "customer_phone": missed_call.customer_phone,
+        "customer_phone_encrypted": missed_call.customer_phone_encrypted,
+        "phone_hash": missed_call.phone_hash,
         "service": "Haircut",
         "slot": slot,
         "status": "confirmed" if slot else "needs_follow_up",
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
     }
 
 
 def save_booking(db: Session, booking_data: dict):
     existing = get_booking_by_missed_call_id(
         db,
-        booking_data["missed_call_id"]
+        booking_data["missed_call_id"],
     )
 
     if existing:
