@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from services.models import MissedCall
+from services.callback_status import callback_status_from_details
 
 
 def get_missed_calls(db: Session):
@@ -53,15 +54,63 @@ def create_missed_call(
 
 
 def mark_callback_started(db: Session, missed_call_id: str):
-    missed_call = get_missed_call_by_id(db, missed_call_id)
+    # Claim the attempt atomically so two requests cannot place duplicate calls.
+    updated = (
+        db.query(MissedCall)
+        .filter(
+            MissedCall.id == missed_call_id,
+            MissedCall.status.in_(["pending_callback", "failed"]),
+        )
+        .update(
+            {"status": "callback_in_progress", "bimpe_call_id": None},
+            synchronize_session=False,
+        )
+    )
+    db.commit()
 
-    if not missed_call:
+    if not updated:
         return None
 
-    missed_call.status = "callback_in_progress"
-    db.commit()
+    missed_call = get_missed_call_by_id(db, missed_call_id)
     db.refresh(missed_call)
 
+    return missed_call
+
+
+def mark_callback_failed(db: Session, missed_call_id: str):
+    # Only release our unassigned attempt, never a newer/provider-linked call.
+    (
+        db.query(MissedCall)
+        .filter(
+            MissedCall.id == missed_call_id,
+            MissedCall.status == "callback_in_progress",
+            MissedCall.bimpe_call_id.is_(None),
+        )
+        .update({"status": "failed"}, synchronize_session=False)
+    )
+    db.commit()
+
+
+def synchronize_callback_status(
+    db: Session, missed_call_id: str, bimpe_call_id: str, call_details
+):
+    status = callback_status_from_details(call_details)
+    if status:
+        query = db.query(MissedCall).filter(
+            MissedCall.id == missed_call_id,
+            MissedCall.bimpe_call_id == bimpe_call_id,
+        )
+        if status == "callback_in_progress":
+            # A late in-flight response must not undo a terminal outcome.
+            query = query.filter(
+                MissedCall.status.in_(["pending_callback", "callback_in_progress"])
+            )
+        query.update({"status": status}, synchronize_session=False)
+        db.commit()
+
+    missed_call = get_missed_call_by_id(db, missed_call_id)
+    if missed_call:
+        db.refresh(missed_call)
     return missed_call
 
 
