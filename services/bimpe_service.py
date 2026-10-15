@@ -1,4 +1,4 @@
-from bimpeai import BIMPEAI
+from bimpeai import BimpeAI
 from datetime import datetime
 
 from config.settings import(
@@ -7,7 +7,7 @@ from config.settings import(
 )
 
 
-client = BIMPEAI(api_key=BIMPEAI_API_KEY)
+client = BimpeAI(api_key=BIMPEAI_API_KEY)
 
 def place_callback_call(customer_phone: str, is_test_call: bool = True):
     response = client.calls.make(
