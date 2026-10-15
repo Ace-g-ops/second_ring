@@ -13,7 +13,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://second-ring-dashboard.replit.app/",
+        "https://second-ring-dashboard.replit.app",
         "https://8071646e-25b5-45c5-9ba9-dd4c1917bfea-00-20ejidf7yy43z.reed.replit.dev",
         "http://127.0.0.1"
     ],
