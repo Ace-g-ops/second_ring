@@ -1,4 +1,4 @@
-from bimpeai import BimpeAI
+from bimpeai import BIMPEAI
 from datetime import datetime
 
 from config.settings import(
