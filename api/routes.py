@@ -9,7 +9,8 @@ from services.missed_call_services import (
     get_missed_call_by_id,
     get_pending_missed_call,
     mark_callback_started,
-    mark_callback_completed,
+    mark_callback_failed,
+    synchronize_callback_status,
     attach_bimpe_call_id,
     create_missed_call,
 )
@@ -82,26 +83,12 @@ def trigger_test_callback(db: Session = Depends(get_db)):
             detail="No pending missed calls found."
         )
 
-    mark_callback_started(db, missed_call.id)
-
-    call_response = place_callback_call(
-        customer_phone=missed_call.customer_phone,
-        is_test_call=True
-    )
-
-    bimpe_call_id = getattr(call_response, "call_id", None)
-
-    if bimpe_call_id:
-        attach_bimpe_call_id(
-            db,
-            missed_call_id=missed_call.id,
-            bimpe_call_id=bimpe_call_id
-        )
+    bimpe_call_id = _start_callback(db, missed_call)
 
     return {
         "message": "Test callback initiated.",
         "missed_call_id": missed_call.id,
-        "bimpeai_response": str(call_response)
+        "bimpe_call_id": bimpe_call_id
     }
 @router.get("/api/callback/{missed_call_id}/result")
 def check_callback_result(
@@ -122,7 +109,17 @@ def check_callback_result(
             detail="This missed call has no BimpeAI call ID yet."
         )
 
-    call_details = retrieve_call_details(missed_call.bimpe_call_id)
+    bimpe_call_id = missed_call.bimpe_call_id
+    call_details = retrieve_call_details(bimpe_call_id)
+    # Persist call lifecycle independently of whether an appointment was booked.
+    missed_call = synchronize_callback_status(
+        db, missed_call.id, bimpe_call_id, call_details
+    )
+    if not missed_call or missed_call.bimpe_call_id != bimpe_call_id:
+        raise HTTPException(
+            status_code=409,
+            detail="A newer callback has started. Refresh to retrieve its result.",
+        )
     filtered_logs = filter_conversation_logs(call_details)
 
     transcript = [
@@ -138,9 +135,11 @@ def check_callback_result(
 
     booking = None
 
-    if booking_data["status"] == "confirmed":
+    if (
+        missed_call.status == "callback_completed"
+        and booking_data["status"] == "confirmed"
+    ):
         booking = save_booking(db, booking_data)
-        mark_callback_completed(db, missed_call.id)
 
     return {
         "missed_call": {
@@ -194,19 +193,7 @@ def create_test_missed_call(db: Session = Depends(get_db)):
         }
     }
 
-@router.post("/api/callback/{missed_call_id}/trigger")
-def trigger_callback(
-    missed_call_id: str,
-    db: Session = Depends(get_db)
-):
-    missed_call = get_missed_call_by_id(db, missed_call_id)
-
-    if not missed_call:
-        raise HTTPException(
-            status_code=404,
-            detail="Missed call not found."
-        )
-
+def _start_callback(db: Session, missed_call):
     if missed_call.status == "callback_in_progress":
         raise HTTPException(
             status_code=400,
@@ -219,7 +206,11 @@ def trigger_callback(
             detail="Callback has already been completed."
         )
 
-    mark_callback_started(db, missed_call.id)
+    if not mark_callback_started(db, missed_call.id):
+        raise HTTPException(
+            status_code=409,
+            detail="This callback is no longer available to start. Refresh the call list.",
+        )
 
     try:
         call_response = place_callback_call(
@@ -227,16 +218,18 @@ def trigger_callback(
             is_test_call=True
         )
     except Exception as exc:
+        mark_callback_failed(db, missed_call.id)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to place BimpeAI call: {str(exc)}"
-        )
+            status_code=502,
+            detail="BimpeAI could not start the callback. Please try again.",
+        ) from exc
 
     bimpe_call_id = getattr(call_response, "call_id", None)
 
     if not bimpe_call_id:
+        mark_callback_failed(db, missed_call.id)
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail="BimpeAI did not return a call ID."
         )
 
@@ -245,6 +238,21 @@ def trigger_callback(
         missed_call_id=missed_call.id,
         bimpe_call_id=bimpe_call_id
     )
+
+    return bimpe_call_id
+
+
+@router.post("/api/callback/{missed_call_id}/trigger")
+def trigger_callback(
+    missed_call_id: str,
+    db: Session = Depends(get_db)
+):
+    missed_call = get_missed_call_by_id(db, missed_call_id)
+
+    if not missed_call:
+        raise HTTPException(status_code=404, detail="Missed call not found.")
+
+    bimpe_call_id = _start_callback(db, missed_call)
 
     return {
         "message": "Callback initiated.",
