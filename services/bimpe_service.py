@@ -7,7 +7,7 @@ from config.settings import(
 )
 
 
-client = BimpeAI(api_key=BIMPEAI_API_KEY)
+client = BIMPEAI(api_key=BIMPEAI_API_KEY)
 
 def place_callback_call(customer_phone: str, is_test_call: bool = True):
     response = client.calls.make(
